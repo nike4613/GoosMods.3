@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HatGoos
 {
-    class Config
+    public class Config
     {
         public enum HatType
         { 
@@ -15,9 +15,9 @@ namespace HatGoos
             None, 
             Custom 
         }
-        public HatType HatMode = HatType.Default;
-        public float HorizontalSize = 1.5f;
-        public float HatPosition = .6f;
-        public string CustomHatPath = "";
+        public HatType HatMode { get; set; } = HatType.Default;
+        public float HorizontalSize { get; set; } = 1.5f;
+        public float HatPosition { get; set; } = .6f;
+        public string CustomHatPath { get; set; } = "";
     }
 }
