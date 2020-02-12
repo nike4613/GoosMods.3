@@ -69,7 +69,4 @@
     <Content Include="Default.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>copy "$(TargetPath)" "Z:\Users\aaron\Documents\Desktop Goose v0.2\Assets\Mods\HatGoos"</PostBuildEvent>
-  </PropertyGroup>
 </Project>

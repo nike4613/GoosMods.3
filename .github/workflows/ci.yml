@@ -27,12 +27,12 @@ jobs:
         working-directory: ./mod-source
         shell: pwsh
         run: |
-          msbuild.exe GoosMods.3.sln -t:restore
+          msbuild.exe GoosMods.3.sln -p:Configuration=Release -t:restore
       - name: Build Source
         working-directory: ./mod-source
         shell: pwsh
         run: |
-          msbuild.exe GoosMods.3.sln -p:Configuration=Release "-p:Platform=Any CPU"
+          msbuild.exe GoosMods.3.sln -p:Configuration=Release
       - name: Archive Mods
         working-directory: ./mod-source
         shell: pwsh
