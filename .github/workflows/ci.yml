@@ -42,11 +42,11 @@ jobs:
           New-Item $env:RelativeLocation -ItemType "directory"
           Get-ChildItem -Directory `
             | Where-Object {
-              Test-Path [IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll")
+              Test-Path ([IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll"))
             } `
             | % {
               $targetPath = [IO.Path]::Combine($_.FullName, "bin", $_.Name);
-              Move-Item [IO.Path]::Combine($_.FullName, "bin", "Release") $targetPath;
+              Move-Item ([IO.Path]::Combine($_.FullName, "bin", "Release")) $targetPath;
               Compress-Archive -Path $targetPath -DestinationPath "$($env:RelativeLocation)/$($_.Name).zip";
             }
       - name: Checkout Pages
