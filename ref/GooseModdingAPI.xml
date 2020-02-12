@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>GooseModdingAPI</name>
+    </assembly>
+    <members>
+        <member name="T:GooseShared.InjectionPoints">
+            <summary>
+            A directory of events you can subscribe to for executing code while the goose runs.
+            </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PostModsLoaded">
+            <summary> </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PreTickEvent">
+            <summary> Fires before the goose 'tick' function. </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PostTickEvent">
+            <summary> Fires after the goose 'tick' function. </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PreUpdateRigEvent">
+            <summary> Fires before the goose 'updateRig' function </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PostUpdateRigEvent">
+            <summary> Fires after the goose's 'updateRig' function. </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PreRenderEvent">
+            <summary> Fires during rendering, before the goose draws itself. </summary>
+        </member>
+        <member name="E:GooseShared.InjectionPoints.PostRenderEvent">
+            <summary> Fires during rendering, after the goose draws itself. </summary>
+        </member>
+        <member name="T:GooseShared.IMod">
+            <summary>
+            Implemented by a mod's entry-point class.
+            </summary>
+        </member>
+        <member name="M:GooseShared.IMod.Init">
+            <summary>
+            The function called as the mod is loaded, for the mod to initialize itself.
+            </summary>
+        </member>
+        <member name="T:GooseShared.API">
+            <summary>
+            This object contains references to a crapton of useful functions. Just don't modify its contents.
+            </summary>
+        </member>
+        <member name="F:GooseShared.API.Goose">
+            <summary> Goose-related helper functions. </summary>
+        </member>
+        <member name="F:GooseShared.API.Helper">
+            <summary> Helper functions for mods. </summary>
+        </member>
+        <member name="F:GooseShared.API.ModHelperFunctions.getModDirectory">
+            <summary>
+            Returns the specified mod's directory.
+            </summary>
+        </member>
+        <member name="F:GooseShared.API.TaskDatabase">
+            <summary> For querying the TaskDatabase. </summary>
+        </member>
+        <member name="F:GooseShared.API.TaskDatabaseQueryFunctions.getTaskIndexByID">
+            <summary> Returns a Task's database index from its string ID. </summary>
+        </member>
+        <member name="F:GooseShared.API.TaskDatabaseQueryFunctions.getAllLoadedTaskIDs">
+            <summary> Returns a list of all loaded Task's IDs. </summary>
+        </member>
+        <member name="F:GooseShared.API.TaskDatabaseQueryFunctions.getRandomTaskID">
+            <summary> Returns a random, randomly-pickable Task's ID. </summary>
+        </member>
+        <member name="T:GooseShared.GooseRenderData">
+            <summary>
+            Describes the default set of colors and brushes the program uses to draw the goose.
+            </summary>
+        </member>
+        <member name="T:GooseShared.GooseEntity">
+            <summary>
+            The main set of data for the goose!
+            </summary>
+        </member>
+        <member name="T:GooseShared.GooseEntity.SpeedTiers">
+            <summary>
+            The enum describing the speeds you can set in GooseFunctions.SetSpeed()
+            </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.parameters">
+            <summary>
+            The set of parameters the goose uses when animating, accelerating, and moving.
+            </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.position">
+            <summary> The current position. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.velocity">
+            <summary> The current velocity. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.direction">
+            <summary> The current direction the goose is facing, in degrees </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.targetDirection">
+            <summary> The target direction of the goose, described as a unit vector. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.extendingNeck">
+            <summary> Override whether the goose is extending its neck - resets every frame. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.targetPos">
+            <summary> The target position. Set this point, and the goose will automatically locomote to it. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.currentSpeed">
+            <summary> Determines the current maximum speed. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.currentAcceleration">
+            <summary> Determines the current rate of acceleration. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.stepInterval">
+            <summary> Determines the interval in seconds at which the goose's feets will step. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.canDecelerateImmediately">
+            <summary> Determines whether the goose can decelerate immediately upon reaching its target location, or whether it will float around it. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.trackMudEndTime">
+            <summary> The time at which the goose should stop tracking mud </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.rig">
+            <summary> The current location of all the goose's body parts, for rendering. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.currentTask">
+            <summary> The integer index of the currently running task in the TaskDatabase. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.currentTaskData">
+            <summary> The currently running task's dataset. </summary>
+        </member>
+        <member name="F:GooseShared.GooseEntity.taskIndexQueue">
+            <summary> A queue of tasks to be selected from the Wandering state. If empty, we will pick a random task. </summary>
+        </member>
+        <member name="F:SamEngine.Deck.i">
+            <summary>
+            Do not mess with this unless you have a very good reason
+            </summary>
+        </member>
+    </members>
+</doc>
