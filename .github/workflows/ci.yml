@@ -1,0 +1,71 @@
+name: Build/Publish Dev builds
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '.github/*'
+
+jobs:
+  build:
+    name: Build/Publish
+    runs-on: windows-latest
+    steps:
+      - name: Configure Git
+        shell: powershell
+        run: |
+          git config --global core.autocrlf true
+          git config --global user.email (($env:GITHUB_ACTOR,"@users.noreply.github.com") -join "")
+          git config --global user.name $env:GITHUB_ACTOR
+      - name: Setup MSBuild.exe
+        uses: warrenbuckley/Setup-MSBuild@v1
+      - name: Checkout Source
+        uses: actions/checkout@v2
+        with:
+          path: ./mod-source
+      - name: Build Source
+        working-directory: ./mod-source
+        shell: pwsh
+        run: |
+          msbuild.exe GoosMods.3.sln /p:Configuration=Release "/p:Platform=Any CPU"
+      - name: Archive Mods
+        working-directory: ./mod-source
+        shell: pwsh
+        env:
+          RelativeLocation: ../mods
+        run: |
+          New-Item $env:RelativeLocation -ItemType "directory"
+          Get-ChildItem -Directory `
+            | Where-Object {
+              Test-Path [IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll")
+            } `
+            | % {
+              $targetPath = [IO.Path]::Combine($_.FullName, "bin", $_.Name);
+              Move-Item [IO.Path]::Combine($_.FullName, "bin", "Release") $targetPath;
+              Compress-Archive -Path $targetPath -DestinationPath "$($env:RelativeLocation)/$($_.Name).zip";
+            }
+      - name: Checkout Pages
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: ./pages
+          token: ${{ secrets.pagesCommitToken }}
+          lfs: true
+      - name: Move Mods
+        working-directory: ./pages
+        shell: pwsh
+        env:
+          RelativeLocation: ../mods
+        run: |
+          Get-ChildItem downloads/dev -Recurse | Remove-Item
+          Move-Item $env:RelativeLocation ./downloads/dev
+      - name: Commit Changed
+        working-directory: ./pages
+        shell: pwsh
+        run: |
+          $srcMessage = (git show -s --format=%B $env:GITHUB_SHA) -join "`n"
+          $ErrorActionPreference = "SilentlyContinue"
+          git add -A 2>&1
+          git commit -q -a -m "Updated dev zips`n$srcMessage"
+          git push -q origin gh-pages
+
