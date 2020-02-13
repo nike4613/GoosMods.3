@@ -62,8 +62,8 @@ jobs:
         env:
           RelativeLocation: ../mods
         run: |
-          Get-ChildItem downloads/dev -Recurse | Where-Object { -not ($_ -eq $Null) } | Remove-Item -Force
-          Move-Item $env:RelativeLocation ./downloads/dev -Force
+          Get-ChildItem downloads/dev -Recurse | Remove-Item -Force
+          Move-Item $env:RelativeLocation/* ./downloads/dev -Force
       - name: Commit Changed
         working-directory: ./pages
         shell: pwsh

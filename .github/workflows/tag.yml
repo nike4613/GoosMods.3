@@ -63,7 +63,7 @@ jobs:
             | % {
               $p = $_.Parent;
               $latestName = [IO.Path]::Combine($p.FullName, "latest");
-              Get-ChildItem $latestName -Recurse | Where-Object { -not ($_ -eq $Null) } | Remove-Item -Force;
+              Get-ChildItem $latestName -Recurse | Remove-Item -Force;
               New-Item $latestName -ItemType "junction" -Value $_.FullName -Force;
             }
       - name: Commit Changed
