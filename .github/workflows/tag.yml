@@ -64,7 +64,7 @@ jobs:
               $p = $_.Parent;
               $latestName = [IO.Path]::Combine($p.FullName, "latest");
               Get-ChildItem $latestName -Recurse | Remove-Item -Force;
-              New-Item $latestName -ItemType "junction" -Value $_.FullName -Force;
+              Copy-Item $_.FullName $latestName -Force -Recurse;
             }
       - name: Commit Changed
         working-directory: ./pages
