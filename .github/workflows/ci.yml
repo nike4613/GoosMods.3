@@ -62,7 +62,7 @@ jobs:
         env:
           RelativeLocation: ../mods
         run: |
-          Get-ChildItem downloads/dev -Recurse | Where-Object { $_ -neq $Null } | Remove-Item -Force
+          Get-ChildItem downloads/dev -Recurse | Where-Object { -not ($_ -eq $Null) } | Remove-Item -Force
           Move-Item $env:RelativeLocation ./downloads/dev -Force
       - name: Commit Changed
         working-directory: ./pages
