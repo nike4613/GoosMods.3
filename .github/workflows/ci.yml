@@ -39,7 +39,9 @@ jobs:
         env:
           RelativeLocation: ../mods
         run: |
-          New-Item $env:RelativeLocation -ItemType "directory"
+          if (-not (Test-Path $env:RelativeLocation)) {
+            New-Item $env:RelativeLocation -ItemType "directory"
+          }
           Get-ChildItem -Directory `
             | Where-Object {
               Test-Path ([IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll"))
@@ -63,6 +65,9 @@ jobs:
           RelativeLocation: ../mods
         run: |
           Get-ChildItem downloads/dev -Recurse | Remove-Item -Force
+          if (-not (Test-Path downloads/dev)) {
+            New-Item downloads/dev -ItemType "directory"
+          }
           Move-Item $env:RelativeLocation/* ./downloads/dev/ -Force
       - name: Commit Changed
         working-directory: ./pages
