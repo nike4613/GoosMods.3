@@ -70,9 +70,11 @@ jobs:
         working-directory: ./pages
         shell: pwsh
         run: |
+          Set-Location ../mod-source
           $srcMessage = (git show -s --format=%B $env:GITHUB_SHA) -join "`n"
+          Set-Location -
           $ErrorActionPreference = "SilentlyContinue"
           git add -A 2>&1
-          git commit -q -a -m "Updated dev zips`n$srcMessage"
+          git commit -q -a -m "Added release zips`n$srcMessage"
           git push -q origin gh-pages
 
