@@ -46,7 +46,7 @@ jobs:
             } `
             | % {
               $targetPath = [IO.Path]::Combine($_.FullName, "bin", $_.Name);
-              Move-Item ([IO.Path]::Combine($_.FullName, "bin", "Release")) $targetPath;
+              Move-Item ([IO.Path]::Combine($_.FullName, "bin", "Release")) $targetPath -Force;
               Compress-Archive -Path $targetPath -DestinationPath "$($env:RelativeLocation)/$($_.Name).zip";
             }
       - name: Checkout Pages
@@ -62,8 +62,8 @@ jobs:
         env:
           RelativeLocation: ../mods
         run: |
-          Get-ChildItem downloads/dev -Recurse | Remove-Item
-          Move-Item $env:RelativeLocation ./downloads/dev
+          Get-ChildItem downloads/dev -Recurse | Where-Object { $_ -neq $Null } | Remove-Item -Force
+          Move-Item $env:RelativeLocation ./downloads/dev -Force
       - name: Commit Changed
         working-directory: ./pages
         shell: pwsh

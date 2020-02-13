@@ -54,7 +54,7 @@ jobs:
             | % {
               $version = [Version]::new((Get-Item ([IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll"))).VersionInfo.FileVersion);
               $targetPath = [IO.Path]::Combine($_.FullName, "bin", $_.Name);
-              Move-Item ([IO.Path]::Combine($_.FullName, "bin", "Release")) $targetPath;
+              Move-Item ([IO.Path]::Combine($_.FullName, "bin", "Release")) $targetPath -Force;
               $outPath = [IO.Path]::Combine($env:RelativeLocation, $_.Name, "$($version.Major).$($version.Minor).$($version.Build)");
               $dir = New-Item $outPath -ItemType "directory";
               Compress-Archive -Path $targetPath -DestinationPath "$outPath/$($_.Name).zip";
@@ -63,8 +63,8 @@ jobs:
             | % {
               $p = $_.Parent;
               $latestName = [IO.Path]::Combine($p.FullName, "latest");
-              Get-ChildItem $latestName -Recurse | Remove-Item -Force;
-              New-Item $latestName -ItemType "junction" -Value $_.FullName;
+              Get-ChildItem $latestName -Recurse | Where-Object { $_ -neq $Null } | Remove-Item -Force;
+              New-Item $latestName -ItemType "junction" -Value $_.FullName -Force;
             }
       - name: Commit Changed
         working-directory: ./pages
