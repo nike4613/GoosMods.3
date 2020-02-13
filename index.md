@@ -1,4 +1,4 @@
-# [hatgoos](/downloads/latest/HatGoos.zip)
+# [hatgoos](/downloads/HatGoos/latest/HatGoos.zip)
 
 a hat for your goose<br/>
 a goose for your hat
