@@ -61,11 +61,21 @@ namespace HatGoos {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] DefaultHatConfig {
+            get {
+                object obj = ResourceManager.GetObject("DefaultHatConfig", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Default {
+        internal static System.Drawing.Bitmap DefaultImage {
             get {
-                object obj = ResourceManager.GetObject("Default", resourceCulture);
+                object obj = ResourceManager.GetObject("DefaultImage", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

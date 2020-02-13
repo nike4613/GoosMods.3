@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using Nett;
 using System.IO;
 using SamEngine;
+using System.IO.Compression;
+using System.Windows.Forms;
 
 namespace HatGoos
 {
@@ -15,6 +17,10 @@ namespace HatGoos
     {
         private Config config = null;
         private Bitmap hatImage = null;
+
+        private HatSettings settings = null;
+
+        public const string Name = nameof(HatGoos);
 
         public void Init()
         {
@@ -24,39 +30,94 @@ namespace HatGoos
 
         private void PostModsLoaded()
         {
-            // load configs
-            var path = Path.Combine(API.Helper.getModDirectory(this), "config.toml");
-            if (File.Exists(path))
-                config = Toml.ReadFile<Config>(path);
-            else
-                config = new Config();
-
-            if (config.HatMode == Config.HatType.Custom && !File.Exists(config.CustomHatPath))
-                config.HatMode = Config.HatType.Default;
-
-            Toml.WriteFile(config, path);
-
-            // initialize hat image
-            switch (config.HatMode)
+            try
             {
-                case Config.HatType.None:
-                    hatImage = new Bitmap(1, 1);
-                    hatImage.SetPixel(0, 0, Color.Transparent);
-                    break;
-                case Config.HatType.Default:
-                    hatImage = Resources.Default;
-                    break;
-                case Config.HatType.Custom:
-                    try
-                    {
-                        hatImage = new Bitmap(config.CustomHatPath);
-                    }
-                    catch
-                    {
-                        hatImage = null;
-                    }
-                    break;
+                var tomlSettings = TomlSettings.Create(c => c
+                    .AllowImplicitConversions(TomlSettings.ConversionSets.All)
+                    .ConfigureType<float?>(b => b
+                        .WithConversionFor<TomlFloat>(v => v
+                            .ToToml(f => f.Value)
+                            .FromToml(t => (float)t.Value))));
+
+                // load configs
+                var path = Path.Combine(API.Helper.getModDirectory(this), "config.toml");
+                if (File.Exists(path))
+                    config = Toml.ReadFile<Config>(path, tomlSettings);
+                else
+                    config = new Config();
+
+                if (config.HatMode == Config.HatType.Custom && !File.Exists(config.CustomHatPath))
+                    config.HatMode = Config.HatType.Default;
+
+                Toml.WriteFile(config, path, tomlSettings);
+
+                // initialize hat image
+                switch (config.HatMode)
+                {
+                    case Config.HatType.None:
+                        hatImage = new Bitmap(1, 1);
+                        hatImage.SetPixel(0, 0, Color.Transparent);
+                        break;
+                    case Config.HatType.Default:
+                        hatImage = Resources.DefaultImage;
+                        settings = GetDefaultHatSettings(tomlSettings);
+                        break;
+                    case Config.HatType.Custom:
+                        try
+                        {
+                            using (var zf = ZipFile.OpenRead(config.CustomHatPath))
+                            {
+                                var entry = zf.GetEntry("hat.toml");
+                                if (entry == null)
+                                {
+                                    MessageBox.Show($"Custom hat at '{config.CustomHatPath}' is invalid. It does not have 'hat.toml'.",
+                                        Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                    break;
+                                }
+
+                                settings = Toml.ReadStream<HatSettings>(entry.Open(), tomlSettings)
+                                    .WithOverride(config.Overrides);
+
+                                var imageEntry = zf.GetEntry(settings.ImageName);
+                                if (imageEntry == null)
+                                {
+                                    MessageBox.Show($"Could not find image '{settings.ImageName}' in hat '{config.CustomHatPath}'.",
+                                        Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                    break;
+                                }
+
+                                hatImage = new Bitmap(imageEntry.Open());
+                            }
+                        }
+                        catch (NotSupportedException)
+                        {
+                            try
+                            {
+                                hatImage = new Bitmap(config.CustomHatPath);
+                                settings = GetDefaultHatSettings(tomlSettings).WithOverride(config.Overrides);
+                            }
+                            catch
+                            {
+                                MessageBox.Show($"Could not open custom hat at '{config.CustomHatPath}'. Make sure that the file can be read.",
+                                    Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+
+                        break;
+                }
             }
+            catch (Exception e)
+            {
+                MessageBox.Show($"Error initializing {Name}: {e}",
+                    Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                hatImage = null; settings = null;
+            }
+        }
+
+        private static HatSettings GetDefaultHatSettings(TomlSettings s = null)
+        {
+            using (var ms = new MemoryStream(Resources.DefaultHatConfig))
+                return Toml.ReadStream<HatSettings>(ms, s);
         }
 
         private void PostRenderEvent(GooseEntity goose, Graphics g)
@@ -64,15 +125,15 @@ namespace HatGoos
             // I can't actually do anything useful per goose entity, because there isn't a way to
             //   register info when a goose entity is created
 
-            if (hatImage == null) return;
+            if (hatImage == null || settings == null) return;
 
             var direction = goose.direction + 90f; ;
             var headPoint = goose.rig.neckHeadPoint;
 
-            var vertBase = (Rig.HeadRadius1 / 2) * config.HatPosition;
+            var vertBase = (Rig.HeadRadius1 / 2) * settings.HatPosition.Value;
 
             var bmp = hatImage;
-            var baseOffset = Rig.HeadRadius1 * config.HorizontalSize / 2;
+            var baseOffset = Rig.HeadRadius1 * settings.HorizontalSize.Value / 2;
             var vertOffset = (((float)bmp.Height) / (float)bmp.Width) * baseOffset * 2;
 
             var set = new[] {

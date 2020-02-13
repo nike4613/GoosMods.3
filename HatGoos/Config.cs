@@ -16,8 +16,23 @@ namespace HatGoos
             Custom 
         }
         public HatType HatMode { get; set; } = HatType.Default;
-        public float HorizontalSize { get; set; } = 1.5f;
-        public float HatPosition { get; set; } = .6f;
         public string CustomHatPath { get; set; } = "";
+        public HatSettings Overrides { get; set; } = null;
     }
+
+    public class HatSettings
+    {
+        public float? HorizontalSize { get; set; }
+        public float? HatPosition { get; set; }
+        public string ImageName { get; set; }
+
+        public HatSettings WithOverride(HatSettings over)
+            => new HatSettings
+            {
+                HorizontalSize = over?.HorizontalSize ?? HorizontalSize,
+                HatPosition = over?.HatPosition ?? HatPosition,
+                ImageName = over?.ImageName ?? ImageName
+            };
+    }
+
 }
