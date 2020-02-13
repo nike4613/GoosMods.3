@@ -1,0 +1,78 @@
+name: Build/Publish Tagged builds
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build:
+    name: Build/Publish
+    runs-on: windows-latest
+    steps:
+      - name: Configure Git
+        shell: powershell
+        run: |
+          git config --global core.autocrlf true
+          git config --global user.email (($env:GITHUB_ACTOR,"@users.noreply.github.com") -join "")
+          git config --global user.name $env:GITHUB_ACTOR
+      - name: Setup MSBuild.exe
+        uses: warrenbuckley/Setup-MSBuild@v1
+      - name: Checkout Source
+        uses: actions/checkout@v2
+        with:
+          path: ./mod-source
+      - name: Restore Packages
+        working-directory: ./mod-source
+        shell: pwsh
+        run: |
+          msbuild.exe GoosMods.3.sln -p:Configuration=Release -t:restore
+      - name: Build Source
+        working-directory: ./mod-source
+        shell: pwsh
+        run: |
+          msbuild.exe GoosMods.3.sln -p:Configuration=Release
+      - name: Checkout Pages
+        uses: actions/checkout@v2
+        with:
+          ref: gh-pages
+          path: ./pages
+          token: ${{ secrets.pagesCommitToken }}
+          lfs: true
+      - name: Archive Mods
+        working-directory: ./mod-source
+        shell: powershell
+        env:
+          RelativeLocation: ../pages/downloads
+        run: |
+          if (-not (Test-Path $env:RelativeLocation)) {
+            New-Item $env:RelativeLocation -ItemType "directory"
+          }
+          Get-ChildItem -Directory `
+            | Where-Object {
+              Test-Path ([IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll"))
+            } `
+            | % {
+              $version = [Version]::new((Get-Item ([IO.Path]::Combine($_.FullName, "bin", "Release", $_.Name + ".dll"))).VersionInfo.FileVersion);
+              $targetPath = [IO.Path]::Combine($_.FullName, "bin", $_.Name);
+              Move-Item ([IO.Path]::Combine($_.FullName, "bin", "Release")) $targetPath;
+              $outPath = [IO.Path]::Combine($env:RelativeLocation, $_.Name, "$($version.Major).$($version.Minor).$($version.Build)");
+              $dir = New-Item $outPath -ItemType "directory";
+              Compress-Archive -Path $targetPath -DestinationPath "$outPath/$($_.Name).zip";
+              return $dir
+            } `
+            | % {
+              $p = $_.Parent;
+              $latestName = [IO.Path]::Combine($p.FullName, "latest");
+              Get-ChildItem $latestName -Recurse | Remove-Item -Force;
+              New-Item $latestName -ItemType "junction" -Value $_.FullName;
+            }
+      - name: Commit Changed
+        working-directory: ./pages
+        shell: pwsh
+        run: |
+          $srcMessage = (git show -s --format=%B $env:GITHUB_SHA) -join "`n"
+          $ErrorActionPreference = "SilentlyContinue"
+          git add -A 2>&1
+          git commit -q -a -m "Updated dev zips`n$srcMessage"
+          git push -q origin gh-pages
+
