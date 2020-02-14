@@ -1,8 +1,8 @@
 name: Build/Publish Tagged builds
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - '*'
 
 jobs:
   build:
