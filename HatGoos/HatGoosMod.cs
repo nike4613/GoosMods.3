@@ -16,11 +16,18 @@ namespace HatGoos
     public class HatGoosMod : IMod
     {
         private Config config = null;
-        private Bitmap hatImage = null;
 
-        private HatSettings settings = null;
+        private Hat hat = default;
 
         public const string Name = nameof(HatGoos);
+        public const string HatfileMeta = "hat.toml";
+
+        private readonly TomlSettings tomlSettings = TomlSettings.Create(c => c
+            .AllowImplicitConversions(TomlSettings.ConversionSets.All)
+            .ConfigureType<float?>(b => b
+                .WithConversionFor<TomlFloat>(v => v
+                    .ToToml(f => f.Value)
+                    .FromToml(t => (float)t.Value))));
 
         public void Init()
         {
@@ -32,13 +39,6 @@ namespace HatGoos
         {
             try
             {
-                var tomlSettings = TomlSettings.Create(c => c
-                    .AllowImplicitConversions(TomlSettings.ConversionSets.All)
-                    .ConfigureType<float?>(b => b
-                        .WithConversionFor<TomlFloat>(v => v
-                            .ToToml(f => f.Value)
-                            .FromToml(t => (float)t.Value))));
-
                 // load configs
                 var path = Path.Combine(API.Helper.getModDirectory(this), "config.toml");
                 if (File.Exists(path))
@@ -55,54 +55,14 @@ namespace HatGoos
                 switch (config.HatMode)
                 {
                     case Config.HatType.None:
-                        hatImage = new Bitmap(1, 1);
-                        hatImage.SetPixel(0, 0, Color.Transparent);
+                        hat = new Hat(new Bitmap(1, 1), GetDefaultHatSettings(tomlSettings));
+                        hat.Image.SetPixel(0, 0, Color.Transparent);
                         break;
                     case Config.HatType.Default:
-                        hatImage = Resources.DefaultImage;
-                        settings = GetDefaultHatSettings(tomlSettings);
+                        hat = new Hat(Resources.DefaultImage, GetDefaultHatSettings(tomlSettings));
                         break;
                     case Config.HatType.Custom:
-                        try
-                        {
-                            using (var zf = ZipFile.OpenRead(config.CustomHatPath))
-                            {
-                                var entry = zf.GetEntry("hat.toml");
-                                if (entry == null)
-                                {
-                                    MessageBox.Show($"Custom hat at '{config.CustomHatPath}' is invalid. It does not have 'hat.toml'.",
-                                        Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                    break;
-                                }
-
-                                settings = Toml.ReadStream<HatSettings>(entry.Open(), tomlSettings)
-                                    .WithOverride(config.Overrides);
-
-                                var imageEntry = zf.GetEntry(settings.ImageName);
-                                if (imageEntry == null)
-                                {
-                                    MessageBox.Show($"Could not find image '{settings.ImageName}' in hat '{config.CustomHatPath}'.",
-                                        Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                    break;
-                                }
-
-                                hatImage = new Bitmap(imageEntry.Open());
-                            }
-                        }
-                        catch (NotSupportedException)
-                        {
-                            try
-                            {
-                                hatImage = new Bitmap(config.CustomHatPath);
-                                settings = GetDefaultHatSettings(tomlSettings).WithOverride(config.Overrides);
-                            }
-                            catch
-                            {
-                                MessageBox.Show($"Could not open custom hat at '{config.CustomHatPath}'. Make sure that the file can be read.",
-                                    Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
-
+                        hat = ReadFromHatfile(config.CustomHatPath, config.Overrides, tomlSettings);
                         break;
                 }
             }
@@ -110,7 +70,53 @@ namespace HatGoos
             {
                 MessageBox.Show($"Error initializing {Name}: {e}",
                     Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                hatImage = null; settings = null;
+                hat = default;
+            }
+        }
+
+        private static Hat ReadFromHatfile(string path, HatSettings overrides, TomlSettings tomlSettings)
+        {
+            try
+            {
+                using (var zf = ZipFile.OpenRead(path))
+                {
+                    var entry = zf.GetEntry(HatfileMeta);
+                    if (entry == null)
+                    {
+                        MessageBox.Show($"Custom hat at '{path}' is invalid. It does not have '{HatfileMeta}'.",
+                            Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return default;
+                    }
+
+                    var settings = Toml.ReadStream<HatSettings>(entry.Open(), tomlSettings)
+                        .WithOverride(overrides);
+
+                    var imageEntry = zf.GetEntry(settings.ImageName);
+                    if (imageEntry == null)
+                    {
+                        MessageBox.Show($"Could not find image '{settings.ImageName}' in hat '{path}'.",
+                            Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return default;
+                    }
+
+                    var hatImage = new Bitmap(imageEntry.Open());
+                    return new Hat(hatImage, settings);
+                }
+            }
+            catch (NotSupportedException)
+            {
+                try
+                {
+                    var hatImage = new Bitmap(path);
+                    var settings = GetDefaultHatSettings(tomlSettings).WithOverride(overrides);
+                    return new Hat(hatImage, settings);
+                }
+                catch
+                {
+                    MessageBox.Show($"Could not open custom hat at '{path}'. Make sure that the file can be read.",
+                        Name, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return default;
+                }
             }
         }
 
@@ -125,15 +131,15 @@ namespace HatGoos
             // I can't actually do anything useful per goose entity, because there isn't a way to
             //   register info when a goose entity is created
 
-            if (hatImage == null || settings == null) return;
+            if (hat.Image == null) return;
 
             var direction = goose.direction + 90f; ;
             var headPoint = goose.rig.neckHeadPoint;
 
-            var vertBase = (Rig.HeadRadius1 / 2) * settings.HatPosition.Value;
+            var vertBase = (Rig.HeadRadius1 / 2) * hat.Settings.HatPosition.Value;
 
-            var bmp = hatImage;
-            var baseOffset = Rig.HeadRadius1 * settings.HorizontalSize.Value / 2;
+            var bmp = hat.Image;
+            var baseOffset = Rig.HeadRadius1 * hat.Settings.HorizontalSize.Value / 2;
             var vertOffset = (((float)bmp.Height) / (float)bmp.Width) * baseOffset * 2;
 
             var set = new[] {
@@ -147,7 +153,7 @@ namespace HatGoos
                               .Select(v => v + headPoint)
                               .Select(ToPoint).ToArray();
 
-            g.DrawImage(hatImage, asPoints);
+            g.DrawImage(hat.Image, asPoints);
         }
 
         private static Vector2 Rotate(Vector2 point, float degrees, ref float? sin, ref float? cos)

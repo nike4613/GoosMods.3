@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Nett;
 
 namespace HatGoos
 {
@@ -15,16 +16,32 @@ namespace HatGoos
             None, 
             Custom 
         }
+
+        [TomlComment(" Valid values: \"" + nameof(HatType.Default) + "\", \"" + nameof(HatType.Custom)
+            + "\", and \"" + nameof(HatType.None) + "\".", CommentLocation.Prepend)]
+        [TomlComment("   \"" + nameof(HatType.Default) + "\" uses the default hat", CommentLocation.Prepend)]
+        [TomlComment("   \"" + nameof(HatType.Custom) + "\" uses the hat file specified in \""
+            + nameof(CustomHatPath) + "\"", CommentLocation.Prepend)]
+        [TomlComment("   \"" + nameof(HatType.None) + "\" shows no hat at all", CommentLocation.Prepend)]
         public HatType HatMode { get; set; } = HatType.Default;
+
+        [TomlComment(" This may be a path to a 'hatfile' or an image supported by System.Drawing.Bitmap", CommentLocation.Prepend)]
+        [TomlComment(" A 'hatfile' is a ZIP archive containing a file named \"" + HatGoosMod.HatfileMeta + "\".", CommentLocation.Prepend)]
+        [TomlComment("   This TOML configuration file should have the following entries:", CommentLocation.Prepend)]
+        [TomlComment("   - " + nameof(HatSettings.ImageName) + ": the name of the entry in the hatfile archive that represents the hat image", CommentLocation.Prepend)]
+        [TomlComment("   - " + nameof(HatSettings.HorizontalSize) + ": the size of the horizonal axis of the hat in terms of head diameters", CommentLocation.Prepend)]
+        [TomlComment("   - " + nameof(HatSettings.HatPosition) + ": the vertical position of the hat in head radii", CommentLocation.Prepend)]
         public string CustomHatPath { get; set; } = "";
+
+        [TomlComment("An [" + nameof(Overrides) + "] section can also be specified in this file to override any of a hatfile's config options", CommentLocation.Prepend)]
         public HatSettings Overrides { get; set; } = null;
     }
 
     public class HatSettings
     {
-        public float? HorizontalSize { get; set; }
-        public float? HatPosition { get; set; }
-        public string ImageName { get; set; }
+        public string ImageName { get; set; } = null;
+        public float? HorizontalSize { get; set; } = null;
+        public float? HatPosition { get; set; } = null;
 
         public HatSettings WithOverride(HatSettings over)
             => new HatSettings
