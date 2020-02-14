@@ -25,15 +25,16 @@ namespace HatGoos
         [TomlComment("   \"" + nameof(HatType.None) + "\" shows no hat at all", CommentLocation.Prepend)]
         public HatType HatMode { get; set; } = HatType.Default;
 
-        [TomlComment(" This may be a path to a 'hatfile' or an image supported by System.Drawing.Bitmap", CommentLocation.Prepend)]
+        [TomlComment("")]
+        [TomlComment(" This may be a path to a 'hatfile', a folder in the structure of a 'hatfile', or an image supported by System.Drawing.Bitmap.", CommentLocation.Prepend)]
         [TomlComment(" A 'hatfile' is a ZIP archive containing a file named \"" + HatGoosMod.HatfileMeta + "\".", CommentLocation.Prepend)]
         [TomlComment("   This TOML configuration file should have the following entries:", CommentLocation.Prepend)]
         [TomlComment("   - " + nameof(HatSettings.ImageName) + ": the name of the entry in the hatfile archive that represents the hat image", CommentLocation.Prepend)]
         [TomlComment("   - " + nameof(HatSettings.HorizontalSize) + ": the size of the horizonal axis of the hat in terms of head diameters", CommentLocation.Prepend)]
         [TomlComment("   - " + nameof(HatSettings.HatPosition) + ": the vertical position of the hat in head radii", CommentLocation.Prepend)]
+        [TomlComment(" You may override the settings specified in the hatfile's configuration using an [" + nameof(Overrides) + "] field in the same structure.")]
         public string CustomHatPath { get; set; } = "";
 
-        [TomlComment("An [" + nameof(Overrides) + "] section can also be specified in this file to override any of a hatfile's config options", CommentLocation.Prepend)]
         public HatSettings Overrides { get; set; } = null;
     }
 
