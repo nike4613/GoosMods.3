@@ -78,6 +78,6 @@ jobs:
           Set-Location -
           $ErrorActionPreference = "SilentlyContinue"
           git add -A 2>&1
-          git commit -q -a -m "Updated dev zips`n$srcMessage"
+          git commit -q -a -m "(Updated dev zips) $srcMessage"
           git push -q origin gh-pages
 
