@@ -46,9 +46,6 @@ namespace HatGoos
                 else
                     config = new Config();
 
-                if (config.HatMode == Config.HatType.Custom && !File.Exists(config.CustomHatPath))
-                    config.HatMode = Config.HatType.Default;
-
                 Toml.WriteFile(config, path, tomlSettings);
 
                 // initialize hat image
@@ -78,7 +75,7 @@ namespace HatGoos
         {
             try
             {
-                using (var zf = ZipFile.OpenRead(path))
+                using (var zf = HatfileReader.Create(path))
                 {
                     var entry = zf.GetEntry(HatfileMeta);
                     if (entry == null)
@@ -88,8 +85,9 @@ namespace HatGoos
                         return default;
                     }
 
-                    var settings = Toml.ReadStream<HatSettings>(entry.Open(), tomlSettings)
-                        .WithOverride(overrides);
+                    HatSettings settings;
+                    using (var str = entry.GetStream())
+                        settings = Toml.ReadStream<HatSettings>(str, tomlSettings).WithOverride(overrides);
 
                     var imageEntry = zf.GetEntry(settings.ImageName);
                     if (imageEntry == null)
@@ -99,11 +97,13 @@ namespace HatGoos
                         return default;
                     }
 
-                    var hatImage = new Bitmap(imageEntry.Open());
+                    Bitmap hatImage;
+                    using (var str = imageEntry.GetStream())
+                        hatImage = new Bitmap(str);
                     return new Hat(hatImage, settings);
                 }
             }
-            catch (NotSupportedException)
+            catch
             {
                 try
                 {
